@@ -185,3 +185,63 @@ def load_all(data_dir: str = "data") -> dict:
         "taa_weights":  TAA_WEIGHTS,
         "saa_weights":  saa_weights,
     }
+
+# ── Validation ────────────────────────────────────────────────────────────────
+
+def validate(data: dict) -> None:
+    """
+    Prints a sanity-check report of the loaded data.
+
+    This is not called automatically — run it from the notebook after
+    calling load_all() to verify everything is in order before running
+    the analysis.
+    """
+    managers     = data["managers"]
+    benchmarks   = data["benchmarks"]
+    rf           = data["rf"]
+    taa_weights  = data["taa_weights"]
+    saa_weights  = data["saa_weights"]
+
+    print("─" * 60)
+    print("DATA LOADER — SANITY CHECK REPORT")
+    print("─" * 60)
+
+    # 1. Shape and date range
+    print(f"\nObservations     : {len(managers)} months")
+    print(f"Date range       : {managers.index.min().date()} to {managers.index.max().date()}")
+    print(f"Manager sleeves  : {list(managers.columns)}")
+    print(f"Benchmark sleeves: {list(benchmarks.columns)}")
+
+    # 2. Index alignment
+    aligned = (
+        managers.index.equals(benchmarks.index)
+        and managers.index.equals(rf.index)
+    )
+    print(f"\nIndices aligned  : {'YES' if aligned else 'NO — FIX REQUIRED'}")
+
+    # 3. Missing values
+    total_missing = (
+        managers.isna().sum().sum()
+        + benchmarks.isna().sum().sum()
+        + rf.isna().sum()
+    )
+    print(f"Missing values   : {total_missing} (should be 0)")
+
+    # 4. Weights sum to 1 (within floating-point tolerance)
+    taa_sum = sum(taa_weights.values())
+    saa_sum = sum(saa_weights.values())
+    tol = 1e-9
+    print(f"\nTAA weights sum  : {taa_sum:.4f} {'OK' if abs(taa_sum - 1) < tol else 'FAIL'}")
+    print(f"SAA weights sum  : {saa_sum:.4f} {'OK' if abs(saa_sum - 1) < tol else 'FAIL'}")
+
+    # 5. Sleeve names match across the three weight-aware objects
+    sleeves_managers   = set(managers.columns)
+    sleeves_benchmarks = set(benchmarks.columns)
+    sleeves_taa        = set(taa_weights.keys())
+    sleeves_saa        = set(saa_weights.keys())
+    names_consistent = (
+        sleeves_managers == sleeves_benchmarks == sleeves_taa == sleeves_saa
+    )
+    print(f"Sleeve names     : {'CONSISTENT' if names_consistent else 'MISMATCH'}")
+
+    print("\n" + "─" * 60)
