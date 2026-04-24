@@ -1,12 +1,12 @@
 # FINM3422 Assessment 2 — Multi-Asset Portfolio Performance
 
 ## Team Members
-- Max Derwin
-- Joel (last name)
-- Leon (last name)
+- Yi Chen (Cathy) Lin
+- Caden Rieger
+- Archer Hanrahan
+- Sienna Hockaday
 
 ## Structure
-- data/ — CSV data files
-- src/ — Python modules
-- notebooks/ — main analysis notebook
-- docs/ — exported reports
+- data/ — CSV data files imported from FINM3422 repo
+- src/ — All Python files 
+- notebooks/ — report and selected graphs
