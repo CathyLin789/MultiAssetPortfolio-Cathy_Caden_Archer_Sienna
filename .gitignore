@@ -23,6 +23,10 @@ env/
 .DS_Store
 Thumbs.db
 
+# macOS system files
+.DS_Store
+**/.DS_Store
+
 # Data (optional — depends on your team's policy)
 # data/*.csv
 # data/raw/
