@@ -135,3 +135,43 @@ def active_return(portfolio_returns: pd.Series, benchmark_returns: pd.Series) ->
     """
     active = portfolio_returns - benchmark_returns
     return active.mean() * 12
+
+def tracking_error(portfolio_returns: pd.Series, benchmark_returns: pd.Series) -> float:
+    """
+    Annualised tracking error — the volatility of the active return.
+
+    Formula: std(r_P - r_B) * sqrt(12)
+
+    Uses the same square-root-of-time scaling as annualised volatility,
+    applied to the difference between portfolio and benchmark returns.
+
+    Args:
+        portfolio_returns: monthly portfolio returns.
+        benchmark_returns: monthly benchmark returns.
+
+    Returns:
+        Annualised tracking error as a decimal.
+    """
+    active = portfolio_returns - benchmark_returns
+    return active.std() * np.sqrt(12)
+
+def information_ratio(portfolio_returns: pd.Series, benchmark_returns: pd.Series) -> float:
+    """
+    Information Ratio — active return per unit of tracking error.
+
+    Formula: active_return / tracking_error
+
+    Conceptually similar to the Sharpe ratio, but measures the
+    efficiency of active management against the benchmark rather than
+    against the risk-free rate.
+
+    Args:
+        portfolio_returns: monthly portfolio returns.
+        benchmark_returns: monthly benchmark returns.
+
+    Returns:
+        Information ratio (dimensionless).
+    """
+    ar = active_return(portfolio_returns, benchmark_returns)
+    te = tracking_error(portfolio_returns, benchmark_returns)
+    return ar / te
