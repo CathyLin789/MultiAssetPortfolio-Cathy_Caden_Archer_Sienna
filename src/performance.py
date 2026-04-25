@@ -175,3 +175,76 @@ def information_ratio(portfolio_returns: pd.Series, benchmark_returns: pd.Series
     ar = active_return(portfolio_returns, benchmark_returns)
     te = tracking_error(portfolio_returns, benchmark_returns)
     return ar / te
+
+# ── Summary helpers ───────────────────────────────────────────────────────────
+
+def sleeve_summary(
+    sleeve_name: str,
+    portfolio_returns: pd.Series,
+    benchmark_returns: pd.Series,
+    monthly_rf: pd.Series,
+) -> dict:
+    """
+    Compute all performance and risk metrics for a single sleeve and
+    return them as a labelled dict.
+
+    Just a thin wrapper around the metric functions defined above —
+    keeps each metric independently testable while giving the notebook
+    a one-call way to gather everything for one sleeve.
+
+    Args:
+        sleeve_name:        Name of the asset class (e.g. 'AUS_EQ').
+        portfolio_returns:  Monthly manager returns for the sleeve.
+        benchmark_returns:  Monthly benchmark returns for the sleeve.
+        monthly_rf:         Monthly risk-free rate series.
+
+    Returns:
+        Dict of all metrics for the sleeve, keyed by display name.
+    """
+    return {
+        "Sleeve":            sleeve_name,
+        "Ann. Return":       annualised_return(portfolio_returns),
+        "Ann. Volatility":   annualised_volatility(portfolio_returns),
+        "Sharpe Ratio":      sharpe_ratio(portfolio_returns, monthly_rf),
+        "Active Return":     active_return(portfolio_returns, benchmark_returns),
+        "Tracking Error":    tracking_error(portfolio_returns, benchmark_returns),
+        "Information Ratio": information_ratio(portfolio_returns, benchmark_returns),
+        "Max Drawdown":      max_drawdown(portfolio_returns),
+    }
+
+def all_sleeves_summary(
+    manager_returns: pd.DataFrame,
+    benchmark_returns: pd.DataFrame,
+    monthly_rf: pd.Series,
+    sleeves: list,
+) -> pd.DataFrame:
+    """
+    Build a summary table covering every sleeve.
+
+    Calls sleeve_summary() once per sleeve, collects the dicts, and
+    returns a DataFrame with one row per sleeve and one column per metric.
+
+    Args:
+        manager_returns:    DataFrame of monthly manager returns
+                            (columns = sleeve names).
+        benchmark_returns:  DataFrame of monthly benchmark returns
+                            (columns = sleeve names).
+        monthly_rf:         Monthly risk-free rate series.
+        sleeves:            List of sleeve names to include
+                            (e.g. ['AUS_EQ', 'INTL_EQ', 'Bonds', ...]).
+
+    Returns:
+        DataFrame indexed by sleeve, with one column per metric.
+    """
+    rows = []
+    for sleeve in sleeves:
+        rows.append(
+            sleeve_summary(
+                sleeve_name=sleeve,
+                portfolio_returns=manager_returns[sleeve],
+                benchmark_returns=benchmark_returns[sleeve],
+                monthly_rf=monthly_rf,
+            )
+        )
+
+    return pd.DataFrame(rows).set_index("Sleeve")
