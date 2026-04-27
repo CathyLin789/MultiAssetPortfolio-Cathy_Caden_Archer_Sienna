@@ -118,3 +118,35 @@ def run_apra_checks(data: dict) -> pd.DataFrame:
         taa_weights[sleeve] * shock_returns[sleeve]
         for sleeve in taa_weights
     )
+
+ # Step 5: Assemble results table
+    results = pd.DataFrame({
+        "Check": [
+            "Long-run return objective",
+            "Volatility limit",
+            "Maximum drawdown",
+            "Stress scenario loss"
+        ],
+        "Actual": [
+            ann_return,
+            ann_vol,
+            drawdown,
+            shock_loss
+        ],
+        "Threshold": [
+            RETURN_TARGET,
+            VOLATILITY_LIMIT,
+            DRAWDOWN_LIMIT,
+            SHOCK_LOSS_LIMIT
+        ]
+    })
+
+    # Step 6: Pass/Fail logic
+    results["Pass"] = [
+        ann_return >= RETURN_TARGET,
+        ann_vol <= VOLATILITY_LIMIT,
+        drawdown >= DRAWDOWN_LIMIT,
+        shock_loss >= SHOCK_LOSS_LIMIT
+    ]
+
+    return results
