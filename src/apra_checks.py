@@ -95,27 +95,3 @@ def run_apra_checks(data: dict) -> pd.DataFrame:
     ann_return = _annualised_return(portfolio_returns)
     ann_vol    = _annualised_volatility(portfolio_returns)
     drawdown   = _max_drawdown(portfolio_returns)
-
-    # Step 3: Define the APRA thresholds 
-
-    RETURN_TARGET      = 0.06   # 6% long-term return objective
-    VOLATILITY_LIMIT   = 0.12   # 12% annual volatility cap
-    DRAWDOWN_LIMIT     = -0.25  # max loss no worse than -25%
-    SHOCK_LOSS_LIMIT   = -0.15  # stress loss threshold 
-
-
-     # Step 4: Stress scenario assumptions
-    #Severe, but reasonable market shock across asset classes.
-
-    shock_returns = {
-        "AUS_EQ":      -0.25,
-        "INTL_EQ":     -0.25,
-        "Bonds":       -0.05,
-        "Real_Estate": -0.15,
-        "PE_VC":       -0.30,
-    }
-
-    shock_loss = sum(
-        taa_weights[sleeve] * shock_returns[sleeve]
-        for sleeve in taa_weights
-    )
