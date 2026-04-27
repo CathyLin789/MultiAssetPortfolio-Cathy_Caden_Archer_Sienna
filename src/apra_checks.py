@@ -69,3 +69,36 @@ def _compute_portfolio_returns(managers: pd.DataFrame, taa_weights: dict) -> pd.
     portfolio_returns = managers.mul(weights, axis=1).sum(axis=1)
 
     return portfolio_returns
+
+# APRA-style checks 
+
+def run_apra_checks(data: dict) -> pd.DataFrame:
+    """
+    Runs all APRA performance and risk checks.
+
+    Args:
+        data: dict returned by data_loader.load_all()
+
+    Returns:
+        DataFrame summarising all APRA checks, including:
+        - Actual values
+        - Thresholds
+        - Pass/Fail status
+    """
+    managers     = data["managers"]
+    taa_weights  = data["taa_weights"]
+
+    # Step 1: Total portfolio returns 
+    portfolio_returns = _compute_portfolio_returns(managers, taa_weights)
+
+    #Step 2: Compute key metrics 
+    ann_return = _annualised_return(portfolio_returns)
+    ann_vol    = _annualised_volatility(portfolio_returns)
+    drawdown   = _max_drawdown(portfolio_returns)
+
+    # Step 3: Define the APRA thresholds 
+
+    RETURN_TARGET      = 0.06   # 6% long-term return objective
+    VOLATILITY_LIMIT   = 0.12   # 12% annual volatility cap
+    DRAWDOWN_LIMIT     = -0.25  # max loss no worse than -25%
+    SHOCK_LOSS_LIMIT   = -0.15  # stress loss threshold
