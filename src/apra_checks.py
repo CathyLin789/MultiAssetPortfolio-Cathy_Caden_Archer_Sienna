@@ -102,4 +102,20 @@ def run_apra_checks(data: dict) -> pd.DataFrame:
     VOLATILITY_LIMIT   = 0.12   # 12% annual volatility cap
     DRAWDOWN_LIMIT     = -0.25  # max loss no worse than -25%
     SHOCK_LOSS_LIMIT   = -0.15  # stress loss threshold 
-    
+
+
+     # Step 4: Stress scenario assumptions
+    #Severe, but reasonable market shock across asset classes.
+
+    shock_returns = {
+        "AUS_EQ":      -0.25,
+        "INTL_EQ":     -0.25,
+        "Bonds":       -0.05,
+        "Real_Estate": -0.15,
+        "PE_VC":       -0.30,
+    }
+
+    shock_loss = sum(
+        taa_weights[sleeve] * shock_returns[sleeve]
+        for sleeve in taa_weights
+    )
