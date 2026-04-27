@@ -101,4 +101,5 @@ def run_apra_checks(data: dict) -> pd.DataFrame:
     RETURN_TARGET      = 0.06   # 6% long-term return objective
     VOLATILITY_LIMIT   = 0.12   # 12% annual volatility cap
     DRAWDOWN_LIMIT     = -0.25  # max loss no worse than -25%
-    SHOCK_LOSS_LIMIT   = -0.15  # stress loss threshold
+    SHOCK_LOSS_LIMIT   = -0.15  # stress loss threshold 
+    
