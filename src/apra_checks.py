@@ -187,3 +187,12 @@ def plot_diagnostics(data: dict) -> None:
     plt.legend()
     plt.grid()
     plt.show()
+
+    # Rolling volatility 
+    rolling_vol = portfolio_returns.rolling(12).std() * np.sqrt(12)
+
+    rolling_vol.plot(title="Rolling 12M Volatility", figsize=(9, 5))
+    plt.axhline(0.12, linestyle="--", label="Volatility Limit")
+    plt.legend()
+    plt.grid()
+    plt.show()
