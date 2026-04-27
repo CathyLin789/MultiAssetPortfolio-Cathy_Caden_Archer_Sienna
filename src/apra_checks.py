@@ -169,4 +169,11 @@ def plot_diagnostics(data: dict) -> None:
     taa_weights  = data["taa_weights"]
 
     portfolio_returns = _compute_portfolio_returns(managers, taa_weights)
+    
+    # Wealth index 
+    wealth = (1 + portfolio_returns).cumprod()
 
+    wealth.plot(title="Portfolio Wealth Index", figsize=(9, 5))
+    plt.ylabel("Wealth")
+    plt.grid()
+    plt.show()
