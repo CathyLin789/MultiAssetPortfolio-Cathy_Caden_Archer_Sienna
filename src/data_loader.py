@@ -17,11 +17,11 @@ from pathlib import Path
 # ── TAA Weights (hardcoded from assignment brief) ─────────────────────────────
 # TAA is not supplied as a CSV — only the brief's table — so it lives in code.
 TAA_WEIGHTS = {
-    "AUS_EQ":      0.35,
-    "INTL_EQ":     0.35,
-    "Bonds":       0.15,
-    "Real_Estate": 0.05,
-    "PE_VC":       0.10,
+    "AUS_EQ":  0.35,
+    "INTL_EQ": 0.35,
+    "BONDS":   0.15,
+    "RE":      0.05,
+    "PEVC":    0.10,
 }
 
 # ── Name mappings ─────────────────────────────────────────────────────────────
@@ -30,21 +30,21 @@ TAA_WEIGHTS = {
 # These two dicts translate between the two worlds.
 
 FILE_STEMS = {
-    "AUS_EQ":      "aus_eq",
-    "INTL_EQ":     "intl_eq",
-    "Bonds":       "bonds",
-    "Real_Estate": "re",
-    "PE_VC":       "pevc",
+    "AUS_EQ":  "aus_eq",
+    "INTL_EQ": "intl_eq",
+    "BONDS":   "bonds",
+    "RE":      "re",
+    "PEVC":    "pevc",
 }
 
-# saa_weight.csv uses different sleeve codes than our display names.
-# This dict converts the CSV's codes into our standard names.
+# CSV codes already match our canonical sleeve names (per README).
+# Kept as identity mapping so the existing load_saa_weights logic still works.
 SAA_CSV_RENAME = {
     "AUS_EQ":  "AUS_EQ",
     "INTL_EQ": "INTL_EQ",
-    "BONDS":   "Bonds",
-    "RE":      "Real_Estate",
-    "PEVC":    "PE_VC",
+    "BONDS":   "BONDS",
+    "RE":      "RE",
+    "PEVC":    "PEVC",
 }
 # ── Helper: load one return-series CSV ────────────────────────────────────────
 
