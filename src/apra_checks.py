@@ -1,3 +1,19 @@
+"""
+
+This code implements APRA performance and risk checks for the total
+multi-asset portfolio.
+
+These checks are designed to replicate regulatory
+oversight used by institutions such as APRA, specifically focusing on:
+
+- Long-run return objectives
+- Volatility (risk) limits
+- Downside risk via maximum drawdown
+- Portfolio resilience under stress scenarios
+
+All calculations are based on monthly portfolio returns.
+"""
+
 import pandas as pd
 import numpy as np
 
@@ -106,18 +122,23 @@ def run_apra_checks(data: dict) -> pd.DataFrame:
     # Step 4: Stress scenario assumptions
     #Severe, but reasonable market shock across asset classes.
 
-    shock_returns = {
-        "AUS_EQ":      -0.25,
-        "INTL_EQ":     -0.25,
-        "Bonds":       -0.05,
-        "Real_Estate": -0.15,
-        "PE_VC":       -0.30,
-    }
+    shock_adjustments = pd.Series({
+    "AUS_EQ":      -0.20,
+    "INTL_EQ":     -0.20,
+    "BONDS":       -0.02,
+    "RE":          -0.10,
+    "PEVC":        -0.25,
+})
 
-    shock_loss = sum(
-        taa_weights[sleeve] * shock_returns[sleeve]
-        for sleeve in taa_weights
-    )
+    # Add shocks to actual monthly returns
+    shocked_returns = managers + shock_adjustments
+
+    # Re compute portfolio returns using shocked data
+    weights = pd.Series(taa_weights)
+    shocked_portfolio_returns = shocked_returns.mul(weights, axis=1).sum(axis=1)
+
+    # Define shock loss as worst observed monthly outcome
+    shock_loss = shocked_portfolio_returns.min()
 
  # Step 5: Assemble results table
     results = pd.DataFrame({
