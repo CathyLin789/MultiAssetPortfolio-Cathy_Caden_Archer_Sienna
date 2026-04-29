@@ -51,17 +51,6 @@ def brinson_monthly(
 
 
 def brinson_summary(monthly_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Aggregate monthly Brinson effects into an annualised summary table.
-
-    Sums monthly effects then scales by 12 to annualise, consistent with
-    the linear approximation used in most attribution systems.
-
-    Returns
-    -------
-    DataFrame indexed by sleeve with columns:
-        Allocation Effect, Selection Effect, Total Active Contribution
-    """
     summary = (
         monthly_df
         .groupby("sleeve")[["allocation", "selection"]]
@@ -74,9 +63,6 @@ def brinson_summary(monthly_df: pd.DataFrame) -> pd.DataFrame:
     summary["Total Active Contribution"] = (
         summary["Allocation Effect"] + summary["Selection Effect"]
     )
-
-    # Annualise
-    summary *= 12
 
     # Totals row
     totals = summary.sum().rename("Total")

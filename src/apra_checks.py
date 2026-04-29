@@ -119,55 +119,47 @@ def run_apra_checks(data: dict) -> pd.DataFrame:
     DRAWDOWN_LIMIT     = -0.25  # max loss no worse than -25%
     SHOCK_LOSS_LIMIT   = -0.15  # stress loss threshold
 
-  # Step 4: Stress scenarios
-    # Following Reader §5.5: R_shock = w_eq*(r_eq + S_eq) + sum(w_i * r_i)
-    # Shock is applied on top of actual returns in a "typical" baseline month.
-    # We use the median monthly return for each sleeve as the baseline,
-    # representing normal market conditions on which the shock is overlaid.
+    # Step 4: Stress scenario assumptions
+    #Severe, but reasonable market shock across asset classes.
 
+    shock_adjustments = pd.Series({
+    "AUS_EQ":      -0.20,
+    "INTL_EQ":     -0.20,
+    "BONDS":       -0.02,
+    "RE":          -0.10,
+    "PEVC":        -0.25,
+})
+
+    # Add shocks to actual monthly returns
+    shocked_returns = managers + shock_adjustments
+
+    # Re compute portfolio returns using shocked data
     weights = pd.Series(taa_weights)
-    actual_returns_stress = managers.median()
+    shocked_portfolio_returns = shocked_returns.mul(weights, axis=1).sum(axis=1)
 
-    # --- Scenario A: Equity Crash (per Reader §5.5) ---
-    # AUS EQ and INTL EQ each shocked by -20%; other sleeves keep actual returns
-    scenario_a = actual_returns_stress.copy()
-    scenario_a["AUS_EQ"]  += -0.20
-    scenario_a["INTL_EQ"] += -0.20
-    shock_loss_a = (scenario_a * weights).sum()
+    # Define shock loss as worst observed monthly outcome
+    shock_loss = shocked_portfolio_returns.min()
 
-    # --- Scenario B: Bond Yield Spike +150 bps (per Reader §5.5) ---
-    # Bonds shocked by -5% (duration x 1.5%); REITs -5%; equities -2%; PE/VC -2%
-    scenario_b = actual_returns_stress.copy()
-    scenario_b["AUS_EQ"]  += -0.02
-    scenario_b["INTL_EQ"] += -0.02
-    scenario_b["BONDS"]   += -0.05
-    scenario_b["RE"]      += -0.05
-    scenario_b["PEVC"]    += -0.02
-    shock_loss_b = (scenario_b * weights).sum()
-
-    # Step 5: Assemble results table
+ # Step 5: Assemble results table
     results = pd.DataFrame({
         "Check": [
             "Long-run return objective",
             "Volatility limit",
             "Maximum drawdown",
-            "Stress scenario A (Equity crash)",
-            "Stress scenario B (Bond yield spike)",
+            "Stress scenario loss"
         ],
         "Actual": [
             ann_return,
             ann_vol,
             drawdown,
-            shock_loss_a,
-            shock_loss_b,
+            shock_loss
         ],
         "Threshold": [
             RETURN_TARGET,
             VOLATILITY_LIMIT,
             DRAWDOWN_LIMIT,
-            SHOCK_LOSS_LIMIT,
-            SHOCK_LOSS_LIMIT,
-        ],
+            SHOCK_LOSS_LIMIT
+        ]
     })
 
     # Step 6: Pass/Fail logic
@@ -175,8 +167,7 @@ def run_apra_checks(data: dict) -> pd.DataFrame:
         ann_return >= RETURN_TARGET,
         ann_vol <= VOLATILITY_LIMIT,
         drawdown >= DRAWDOWN_LIMIT,
-        shock_loss_a >= SHOCK_LOSS_LIMIT,
-        shock_loss_b >= SHOCK_LOSS_LIMIT,
+        shock_loss >= SHOCK_LOSS_LIMIT
     ]
 
     return results
