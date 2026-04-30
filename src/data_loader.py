@@ -245,3 +245,17 @@ def validate(data: dict) -> None:
     print(f"Sleeve names     : {'CONSISTENT' if names_consistent else 'MISMATCH'}")
 
     print("\n" + "─" * 60)
+
+
+
+# ----- Key Tables and Figures ------
+
+# --- Table 2.1 ---
+
+def table_2_1(managers, benchmarks):
+    summary = pd.concat([
+        managers.add_suffix("_mgr"),
+        benchmarks.add_suffix("_bm")
+    ], axis=1).describe().T
+
+    return summary[["count", "mean", "std", "min", "max"]].round(4)

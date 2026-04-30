@@ -16,6 +16,7 @@ All calculations are based on monthly portfolio returns.
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 # Core portfolio metrics 
@@ -216,4 +217,53 @@ def plot_diagnostics(data: dict) -> None:
     plt.axhline(0.12, linestyle="--", label="Volatility Limit")
     plt.legend()
     plt.grid()
+    plt.show()
+
+# ----- Key Tables and Figures ------
+
+# --- Table 5.1 ---
+
+def table_5_1(apra_results):
+    return apra_results.style.format({
+        "Actual":    "{:.2%}",
+        "Threshold": "{:.2%}",
+    })
+
+# --- Figure 5.1 ----
+
+def plot_figure_5_1(fund_returns):
+    # Drawdown timeline — uses the fund_returns series already constructed in section 4
+    fund_wealth   = (1 + fund_returns).cumprod()
+    rolling_peak  = fund_wealth.cummax()
+    fund_drawdown = (fund_wealth - rolling_peak) / rolling_peak
+
+    fig, ax = plt.subplots(figsize=(10, 4.5))
+    fund_drawdown.plot(ax=ax, linewidth=1.5, color="C3")
+    ax.axhline(-0.25, linestyle="--", color="black", linewidth=1, label="Drawdown threshold (−25%)")
+    ax.fill_between(fund_drawdown.index, fund_drawdown, 0, color="C3", alpha=0.15)
+    ax.set_title("Total Fund — Drawdown Timeline")
+    ax.set_ylabel("Drawdown")
+    ax.set_xlabel("")
+    ax.yaxis.set_major_formatter(plt.matplotlib.ticker.PercentFormatter(1.0))
+    ax.legend(loc="lower right")
+    ax.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+# --- Figure 5.2 ----
+
+def plot_figure_5_2(fund_returns):
+    # Rolling 12-month annualised volatility
+    rolling_vol = fund_returns.rolling(12).std() * np.sqrt(12)
+
+    fig, ax = plt.subplots(figsize=(10, 4.5))
+    rolling_vol.plot(ax=ax, linewidth=1.5, color="C0")
+    ax.axhline(0.12, linestyle="--", color="black", linewidth=1, label="Volatility band (12%)")
+    ax.set_title("Total Fund — 12-Month Rolling Annualised Volatility")
+    ax.set_ylabel("Annualised volatility")
+    ax.set_xlabel("")
+    ax.yaxis.set_major_formatter(plt.matplotlib.ticker.PercentFormatter(1.0))
+    ax.legend(loc="best")
+    ax.grid(alpha=0.3)
+    plt.tight_layout()
     plt.show()

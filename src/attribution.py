@@ -11,6 +11,7 @@ Effects are calculated on a monthly basis and then aggregated into a full-sample
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def brinson_monthly(
@@ -105,3 +106,129 @@ def brinson_summary(
     summary = pd.concat([summary, totals.to_frame().T])
 
     return summary
+
+
+# ----- Key tables and graphs ----
+
+
+# --- Table 6.1 ---
+
+def table_6_1(managers, benchmarks, taa_weights, saa_weights):
+    from attribution import brinson_monthly, brinson_summary
+
+    monthly_attr = brinson_monthly(
+        mgr_returns = managers,
+        bm_returns  = benchmarks,
+        taa_weights = taa_weights,
+        saa_weights = saa_weights,
+    )
+
+    attr_summary = brinson_summary(monthly_attr)
+
+    return attr_summary.style.format({
+        "Allocation Effect":         "{:.4%}",
+        "Selection Effect":          "{:.4%}",
+        "Total Active Contribution": "{:.4%}",
+    })
+
+
+# --- Table 6.2 ---
+def table_6_2(managers, benchmarks, taa_weights, saa_weights):
+    monthly_attr_ext = brinson_monthly(
+        mgr_returns         = managers,
+        bm_returns          = benchmarks,
+        taa_weights         = taa_weights,
+        saa_weights         = saa_weights,
+        include_interaction = True,
+    )
+
+    attr_summary_ext = brinson_summary(monthly_attr_ext, include_interaction=True)
+
+    return attr_summary_ext.style.format({
+        "Allocation Effect":         "{:.4f}",
+        "Selection Effect":          "{:.4f}",
+        "Interaction Effect":        "{:.4f}",
+        "Total Active Contribution": "{:.4f}",
+    })
+
+# --- Figure 6.1 ---
+
+def plot_figure_6_1(attr_summary):
+    plot_data = attr_summary.drop("Total")[["Allocation Effect", "Selection Effect"]]
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    x     = np.arange(len(plot_data))
+    width = 0.35
+
+    ax.bar(x - width/2, plot_data["Allocation Effect"], width, label="Allocation Effect")
+    ax.bar(x + width/2, plot_data["Selection Effect"],  width, label="Selection Effect")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(plot_data.index)
+    ax.axhline(0, color="black", linewidth=0.5)
+    ax.set_ylabel("Cumulative Contribution to Active Return")
+    ax.set_title("Brinson Attribution: Allocation vs Selection by Asset Class")
+    ax.legend()
+    ax.grid(alpha=0.3, axis="y")
+    plt.tight_layout()
+    plt.show()
+
+# --- Figure 6.2 ---
+
+def plot_figure_6_2(monthly_attr):
+    # Pivot monthly attribution to get allocation and selection per sleeve over time
+    alloc_pivot = monthly_attr.pivot(index="date", columns="sleeve", values="allocation")
+    sel_pivot   = monthly_attr.pivot(index="date", columns="sleeve", values="selection")
+
+    # Cumulative sums over time
+    alloc_cumsum = alloc_pivot.cumsum()
+    sel_cumsum   = sel_pivot.cumsum()
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=False)
+
+    # Allocation effects
+    alloc_cumsum.plot(ax=axes[0])
+    axes[0].set_title("Cumulative Allocation Effect by Sleeve")
+    axes[0].set_ylabel("Cumulative Contribution")
+    axes[0].set_xlabel("")
+    axes[0].axhline(0, color="black", linewidth=0.5)
+    axes[0].grid(alpha=0.3)
+    axes[0].legend(fontsize=9)
+
+    # Selection effects
+    sel_cumsum.plot(ax=axes[1])
+    axes[1].set_title("Cumulative Selection Effect by Sleeve")
+    axes[1].set_ylabel("Cumulative Contribution")
+    axes[1].set_xlabel("")
+    axes[1].axhline(0, color="black", linewidth=0.5)
+    axes[1].grid(alpha=0.3)
+    axes[1].legend(fontsize=9)
+
+    plt.tight_layout()
+    plt.show()
+
+
+# --- Figure 6.3 ---
+
+def plot_figure_6_3(attr_summary_ext):
+    plot_data = attr_summary_ext.drop("Total")[["Allocation Effect", "Selection Effect", "Interaction Effect"]]
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    x     = np.arange(len(plot_data))
+    width = 0.25
+
+    ax.bar(x - width, plot_data["Allocation Effect"],  width, label="Allocation Effect")
+    ax.bar(x,         plot_data["Selection Effect"],   width, label="Selection Effect")
+    ax.bar(x + width, plot_data["Interaction Effect"], width, label="Interaction Effect")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(plot_data.index)
+    ax.axhline(0, color="black", linewidth=0.5)
+    ax.set_ylabel("Contribution to Active Return (annualised)")
+    ax.set_title("Brinson Attribution: All Three Effects by Asset Class")
+    ax.legend()
+    ax.grid(alpha=0.3, axis="y")
+    plt.tight_layout()
+    plt.show()
+
