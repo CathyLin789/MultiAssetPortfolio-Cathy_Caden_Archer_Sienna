@@ -20,8 +20,9 @@ Two summary helpers (sleeve_summary, all_sleeves_summary) bundle the
 metrics into a tidy DataFrame for the report.
 """
 
-import numpy as np
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 # ── Single-series metrics ─────────────────────────────────────────────────────
 
@@ -248,3 +249,136 @@ def all_sleeves_summary(
         )
 
     return pd.DataFrame(rows).set_index("Sleeve")
+
+
+
+# ---- Key Tables and Figures ----
+
+# --- Table 3.1 ---
+
+def table_3_1(managers, benchmarks, rf):
+    sleeves = list(managers.columns)
+
+    mgr_summary = all_sleeves_summary(managers, benchmarks, rf, sleeves)
+
+    return mgr_summary.style.format({
+        "Ann. Return":       "{:.2%}",
+        "Ann. Volatility":   "{:.2%}",
+        "Sharpe Ratio":      "{:.3f}",
+        "Active Return":     "{:.2%}",
+        "Tracking Error":    "{:.2%}",
+        "Information Ratio": "{:.3f}",
+        "Max Drawdown":      "{:.2%}",
+    })
+
+# --- Figure 3.1 ---
+
+def plot_figure_3_1(managers, benchmarks, rf):
+    sleeves     = list(managers.columns)
+    mgr_summary = all_sleeves_summary(managers, benchmarks, rf, sleeves)
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    x     = np.arange(len(sleeves))
+    width = 0.35
+
+    ax.bar(x - width/2, mgr_summary["Sharpe Ratio"],      width, label="Sharpe Ratio")
+    ax.bar(x + width/2, mgr_summary["Information Ratio"], width, label="Information Ratio")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(sleeves)
+    ax.axhline(0, color="black", linewidth=0.5)
+    ax.set_ylabel("Ratio")
+    ax.set_title("Sharpe and Information Ratios by Sleeve")
+    ax.legend()
+    ax.grid(alpha=0.3, axis="y")
+    plt.tight_layout()
+    plt.show()
+
+# --- Figure 3.2 --- 
+
+def plot_figure_3_2(managers, benchmarks):
+    from performance import wealth_index
+
+    sleeves = list(managers.columns)
+
+    for sleeve in sleeves:
+        fig, ax = plt.subplots(figsize=(9, 4))
+
+        wealth_index(managers[sleeve]).plot(ax=ax, label=f"{sleeve} (Manager)", linewidth=2)
+        wealth_index(benchmarks[sleeve]).plot(ax=ax, label=f"{sleeve} (Benchmark)", linewidth=2, linestyle="--")
+
+        ax.set_title(f"{sleeve} — Wealth Index (Manager vs Benchmark)")
+        ax.set_ylabel("Growth of $1")
+        ax.set_xlabel("")
+        ax.legend(loc="best")
+        ax.grid(alpha=0.3)
+        plt.tight_layout()
+        plt.show()
+
+# --- Table 4.1 ---
+
+def table_4_1(managers, benchmarks, taa_weights, saa_weights, rf):
+    from performance import sleeve_summary
+
+    def weighted_return(returns_df, weights_dict):
+        """
+        Build a portfolio return series from per-sleeve returns and a weights dict.
+        Used for both the total fund (TAA × managers) and the composite benchmark (SAA × benchmarks).
+        """
+        weights = pd.Series(weights_dict)
+        return returns_df.mul(weights, axis=1).sum(axis=1)
+
+    # Construct fund-level return series
+    fund_returns      = weighted_return(managers,   taa_weights)
+    composite_returns = weighted_return(benchmarks, saa_weights)
+
+    # Apply the same per-sleeve summary helper, treating "fund" as a single sleeve
+    fund_metrics = sleeve_summary(
+        sleeve_name="Total Fund",
+        portfolio_returns=fund_returns,
+        benchmark_returns=composite_returns,
+        monthly_rf=rf,
+    )
+
+    # One-row DataFrame to match the section 3 column layout
+    fund_summary = pd.DataFrame([fund_metrics]).set_index("Sleeve")
+
+    return fund_summary.style.format({
+        "Ann. Return":       "{:.2%}",
+        "Ann. Volatility":   "{:.2%}",
+        "Sharpe Ratio":      "{:.3f}",
+        "Active Return":     "{:.2%}",
+        "Tracking Error":    "{:.2%}",
+        "Information Ratio": "{:.3f}",
+        "Max Drawdown":      "{:.2%}",
+    })
+
+# --- Figure 4.1 ---
+
+def plot_figure_4_1(managers, benchmarks, taa_weights, saa_weights):
+    from performance import wealth_index
+
+    def weighted_return(returns_df, weights_dict):
+        weights = pd.Series(weights_dict)
+        return returns_df.mul(weights, axis=1).sum(axis=1)
+
+    fund_returns      = weighted_return(managers,   taa_weights)
+    composite_returns = weighted_return(benchmarks, saa_weights)
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    wealth_index(fund_returns).plot(
+        ax=ax, label="Total Fund (TAA × Managers)", linewidth=2
+    )
+    wealth_index(composite_returns).plot(
+        ax=ax, label="Composite Benchmark (SAA × Benchmarks)", linewidth=2, linestyle="--"
+    )
+
+    ax.set_title("Total Fund vs Composite Benchmark — Wealth Index")
+    ax.set_ylabel("Growth of $1")
+    ax.set_xlabel("")
+    ax.legend(loc="best")
+    ax.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.show()
